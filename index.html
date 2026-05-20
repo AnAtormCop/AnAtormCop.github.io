@@ -1,40 +1,631 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <style>
-        body { 
-            font-family: sans-serif; 
-            text-align: center; 
-            padding-top: 100px;
-            margin: 0;
-            height: 100vh;
-            color: white;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>X6525 | NothinPorts</title>
+<style>
+:root {
+--bg-color: #000000;
+--text-color: #ffffff;
+--text-color-dim: #a0a0a0;
+--accent-color: #ffffff;
+--border-color: #1a1a1a;
+--ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+}
+* {
+margin: 0;
+padding: 0;
+box-sizing: border-box;
+font-family: -apple-system, BlinkMacSystemFont, "Roboto", Roboto, Helvetica, Arial, sans-serif;
+}
+body {
+background-color: var(--bg-color);
+color: var(--text-color);
+line-height: 1.6;
+overflow-x: hidden;
+position: relative;
+height: 100vh;
+display: flex;
+flex-direction: column;
+justify-content: space-between;
+}
 
-            background: linear-gradient(-45deg, #000000, #1a1a1a, #333333, #0f0f0f);
-            background-size: 400% 400%;
-            animation: gradientShift 12s ease infinite;
-        }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
+#splashOverlay {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: #000000;
+z-index: 9999;
+opacity: 1;
+transition: opacity 0.8s var(--ease-premium);
+pointer-events: auto;
+}
 
-        h1 { 
-            font-size: 3.5rem;
-            margin-bottom: 10px;
-            letter-spacing: 2px;
-        }
+#bgCanvas {
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+z-index: -1;
+opacity: 0;
+animation: fadeIn 2s var(--ease-premium) 0.5s forwards;
+}
 
-        p {
-            font-size: 1.2rem;
-            opacity: 0.8;
-        }
-    </style>
+.view-container {
+flex-grow: 1;
+display: grid;
+grid-template-columns: 1fr;
+grid-template-rows: 1fr;
+align-items: center; 
+justify-items: center;
+width: 100%;
+position: relative;
+}
+.page {
+grid-column: 1;
+grid-row: 1;
+max-width: 950px;
+width: 100%;
+padding: 3rem 1.5rem;
+z-index: 10;
+pointer-events: none;
+opacity: 0;
+transform: translateY(20px);
+transition: opacity 0.6s var(--ease-premium), transform 0.6s var(--ease-premium);
+}
+.page.active {
+opacity: 1;
+transform: translateY(0);
+pointer-events: auto;
+}
+
+.hero, .tools-container, .credits-container {
+text-align: left; 
+display: flex;
+flex-direction: column;
+align-items: flex-start; 
+justify-content: center;
+}
+
+.view-container h2 {
+font-size: 2.2rem;
+font-weight: normal; 
+margin-bottom: 1.8rem;
+letter-spacing: -0.5px;
+}
+
+.hero h1 {
+font-size: 3.5rem;
+font-weight: normal; 
+letter-spacing: -1px;
+margin-bottom: 1.5rem;
+line-height: 1.1;
+opacity: 0;
+transform: translateY(30px);
+animation: fadeInUp 1.2s var(--ease-premium) 0.2s forwards;
+}
+.hero p, .page-desc {
+font-size: 1.2rem;
+font-weight: normal; 
+color: var(--text-color-dim);
+margin-bottom: 2.5rem;
+}
+
+.hero-btn-primary {
+margin-bottom: 1rem;
+opacity: 0;
+transform: translateY(20px);
+animation: fadeInUp 1.2s var(--ease-premium) 0.5s forwards;
+}
+.hero-btn-secondary-group {
+display: flex;
+flex-wrap: wrap;
+gap: 0.75rem;
+opacity: 0;
+transform: translateY(20px);
+animation: fadeInUp 1.2s var(--ease-premium) 0.6s forwards;
+}
+
+/* --- INTERACTIVE ACTIONS --- */
+.btn {
+display: inline-block;
+background-color: transparent;
+color: var(--text-color);
+padding: 0.8rem 2.2rem;
+border-radius: 50px;
+border: 1px solid rgba(255, 255, 255, 0.3);
+text-decoration: none;
+font-weight: 600;
+font-size: 0.9rem;
+text-transform: uppercase;
+letter-spacing: 1px;
+cursor: pointer;
+position: relative;
+overflow: hidden;
+transition: transform 0.4s var(--ease-premium), background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease, box-shadow 0.4s ease;
+}
+.btn-secondary {
+padding: 0.6rem 1.6rem;
+font-size: 0.8rem;
+border-color: rgba(255, 255, 255, 0.15);
+color: var(--text-color-dim);
+}
+.btn:hover:not(:disabled) {
+transform: translateY(-3px) scale(1.02);
+border-color: rgba(255, 255, 255, 1);
+background-color: var(--text-color);
+color: var(--bg-color);
+box-shadow: 0 10px 30px rgba(255, 255, 255, 0.15);
+}
+.btn:disabled {
+border-color: #222 !important;
+color: #444 !important;
+background: transparent !important;
+cursor: not-allowed;
+transform: none !important;
+box-shadow: none !important;
+}
+
+/* --- GRID CONFIGURATIONS --- */
+.device-grid, .tools-grid {
+display: grid;
+grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+gap: 1.5rem;
+width: 100%;
+margin-bottom: 2rem;
+text-align: left;
+}
+.device-card, .tools-item-card {
+background: rgba(5, 5, 5, 0.85);
+backdrop-filter: blur(12px);
+border: 2px dashed rgba(255, 255, 255, 0.4);
+outline: 1px solid rgba(255, 255, 255, 0.1);
+outline-offset: -4px;
+border-radius: 4px; 
+overflow: hidden; 
+display: flex;
+flex-direction: column;
+transition: border-color 0.3s ease, transform 0.3s var(--ease-premium);
+}
+.device-card:hover, .tools-item-card:hover {
+border-color: rgba(255, 255, 255, 0.9);
+transform: translateY(-3px);
+}
+
+/* --- CUSTOM PLATFORM CORES --- */
+.tools-item-card.os-windows {
+    background: rgba(30, 50, 90, 0.4); /* Dim Blue */
+    border: 2px dashed rgba(100, 150, 255, 0.5);
+}
+.tools-item-card.os-macos {
+    background: rgba(255, 255, 255, 0.95); /* White and Black style */
+    color: #000000;
+    border: 2px dashed rgba(0, 0, 0, 0.8);
+}
+.tools-item-card.os-macos h3, .tools-item-card.os-macos .tool-meta {
+    color: #000000 !important;
+}
+.tools-item-card.os-macos .btn {
+    border-color: rgba(0, 0, 0, 0.3);
+    color: #000000;
+}
+.tools-item-card.os-macos .btn:hover:not(:disabled) {
+    background-color: #000000;
+    color: #ffffff;
+}
+.tools-item-card.os-windows-linux {
+    background: linear-gradient(135deg, rgba(30, 50, 90, 0.5) 0%, rgba(30, 50, 90, 0.5) 50%, rgba(5, 5, 5, 0.9) 50%, rgba(5, 5, 5, 0.9) 100%); /* Blue/Black split */
+    border: 2px dashed rgba(100, 150, 255, 0.4);
+}
+
+/* --- PORT BANNER CONSTRAINTS --- */
+.device-banner-frame {
+width: 100%;
+height: 145px; 
+position: relative;
+background-color: #0d0d0d;
+border-bottom: 1px solid var(--border-color);
+overflow: hidden;
+}
+.device-banner-img {
+width: 100%;
+height: 100%;
+object-fit: cover;
+opacity: 0.65;
+filter: grayscale(100%);
+transition: opacity 0.3s ease, filter 0.3s ease;
+}
+.device-card:hover .device-banner-img {
+opacity: 0.85;
+filter: grayscale(20%);
+}
+.banner-overlay-text {
+position: absolute;
+bottom: 0.6rem;
+left: 1rem;
+font-family: monospace;
+font-weight: 800;
+font-size: 0.9rem;
+color: #fff;
+text-transform: uppercase;
+letter-spacing: 1px;
+background: rgba(0,0,0,0.8);
+padding: 0.1rem 0.4rem;
+border-radius: 2px;
+border: 1px solid rgba(255,255,255,0.1);
+}
+
+.card-body {
+padding: 1.2rem;
+display: flex;
+flex-direction: column;
+flex-grow: 1;
+}
+.card-body h3 {
+font-size: 1.15rem;
+font-weight: 700;
+margin-bottom: 0.4rem;
+display: flex;
+justify-content: space-between;
+align-items: center;
+gap: 0.5rem;
+}
+.device-meta, .tool-meta {
+font-size: 0.8rem;
+color: #777;
+margin-bottom: 1.2rem;
+}
+.device-meta span { color: #fff; font-weight: 500; }
+
+.card-action-row {
+display: flex;
+gap: 0.5rem;
+width: 100%;
+margin-top: auto;
+}
+.card-action-row .btn {
+flex: 1; 
+padding: 0.5rem 0.3rem;
+font-size: 0.7rem;
+text-decoration: none;
+text-align: center;
+border-radius: 4px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.tag {
+font-size: 0.6rem;
+padding: 0.15rem 0.4rem;
+border-radius: 2px;
+font-weight: 600;
+text-transform: uppercase;
+white-space: nowrap;
+}
+.tag.official { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
+.tag.unofficial { background: rgba(255,255,255,0.03); color: #555; border: 1px solid #222; }
+
+.credits-list-wrapper {
+width: 100%;
+margin-bottom: 2rem;
+background: rgba(5, 5, 5, 0.5);
+border: 1px solid var(--border-color);
+border-radius: 6px;
+padding: 1.5rem;
+}
+.credit-node-row {
+display: flex;
+justify-content: space-between;
+border-bottom: 1px dashed #1a1a1a;
+padding: 0.75rem 0;
+}
+.credit-node-row:last-child { border-bottom: none; }
+.credit-role { color: var(--text-color-dim); font-size: 0.9rem; }
+.credit-name { color: #fff; font-weight: 600; font-family: monospace; }
+
+.back-btn {
+background: none;
+border: none;
+color: var(--text-color-dim);
+cursor: pointer;
+font-size: 0.9rem;
+font-weight: 600;
+text-transform: uppercase;
+letter-spacing: 1px;
+transition: color 0.3s ease;
+margin-top: 1rem;
+display: inline-block;
+text-decoration: none;
+}
+.back-btn:hover { color: #fff; }
+
+footer {
+text-align: center;
+padding: 2rem 1.5rem;
+font-size: 0.8rem;
+letter-spacing: 1px;
+text-transform: uppercase;
+color: #444;
+border-top: 1px solid var(--border-color);
+opacity: 0;
+position: relative;
+z-index: 10;
+width: 100%;
+animation: fadeIn 1.5s var(--ease-premium) 1s forwards;
+}
+
+@keyframes fadeInUp { to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { to { opacity: 1;} }
+</style>
 </head>
 <body>
-    <h1>NotHinPorts</h1>
-    <p>The Website built for X6525 [Infinix Smart 8]</p>
+
+<div id="splashOverlay"></div>
+<canvas id="bgCanvas"></canvas>
+
+<div class="view-container">
+    <section class="page hero active" id="page-1">
+        <h1>GridPage1</h1>
+        <p>The place only for X6525 [Infinix Smart 8]</p>
+        
+        <div class="hero-btn-primary">
+            <a href="#roms" class="btn" onclick="switchPage('2')">View ROMs</a>
+        </div>
+        
+        <div class="hero-btn-secondary-group">
+            <a id="tgLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">Telegram</a>
+            <a href="#tools" class="btn btn-secondary" onclick="switchPage('3')">Tools</a>
+            <a href="#credits" class="btn btn-secondary" onclick="switchPage('4')">Credits</a>
+        </div>
+    </section>
+    
+    <section class="page device-container" id="page-2">
+        <h2>Supported Devices</h2>
+        <div class="device-grid" id="devicesContainer"></div>
+        <a href="#" class="back-btn" onclick="switchPage('1')">← Back to Home</a>
+    </section>
+
+    <section class="page tools-container" id="page-3">
+        <h2>Flashing Tools</h2>
+        <p class="page-desc" style="margin-bottom: 1.5rem;">Tools built for Spreadtrum chips [UNISOC]</p>
+        <div class="tools-grid" id="toolsContainer"></div>
+        <a href="#" class="back-btn" onclick="switchPage('1')">← Back to Home</a>
+    </section>
+
+    <section class="page credits-container" id="page-4">
+        <h2>Project Credits</h2>
+        <p class="page-desc" style="margin-bottom: 1.5rem;">The developers, testers, and maintainers driving NothinPorts ecosystem layout designs.</p>
+        <div class="credits-list-wrapper" id="creditsContainer"></div>
+        <a href="#" class="back-btn" onclick="switchPage('1')">← Back to Home</a>
+    </section>
+</div>
+
+<footer>
+    <p>&copy; holy sigma &gt;_&lt;</p>
+</footer>
+
+<script src="list.js"></script>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    const splash = document.getElementById('splashOverlay');
+    if (splash) {
+        setTimeout(() => {
+            splash.style.opacity = '0';
+            splash.style.pointerEvents = 'none';
+            setTimeout(() => splash.remove(), 800);
+        }, 400); 
+    }
+
+    const telegramBtn = document.getElementById('tgLink');
+    if (typeof globalConfigs !== 'undefined' && globalConfigs.telegram_url) {
+        telegramBtn.href = globalConfigs.telegram_url;
+    }
+    evaluateRouteLocation();
+});
+
+function evaluateRouteLocation() {
+    const route = window.location.hash;
+    if (route === '#roms') switchPage('2');
+    else if (route === '#tools') switchPage('3');
+    else if (route === '#credits') switchPage('4');
+    else switchPage('1');
+}
+
+function switchPage(pageId) {
+    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+    const targetPage = document.getElementById(`page-${pageId}`);
+    if(targetPage) {
+        targetPage.classList.add('active');
+        if(pageId === '2') loadDeviceGrid();
+        if(pageId === '3') loadToolsWorkspace();
+        if(pageId === '4') loadCreditsWorkspace();
+    }
+}
+
+function loadDeviceGrid() {
+    const container = document.getElementById('devicesContainer');
+    if(!container) return;
+    container.innerHTML = ''; 
+    
+    if (typeof deviceDatabase === 'undefined' || deviceDatabase.length === 0) return;
+    
+    deviceDatabase.forEach(device => {
+        const statusClass = device.status ? device.status.toLowerCase() : 'unofficial';
+        
+        let btn1HTML = '';
+        if (device.btn1_text && device.btn1_text.trim() !== '' && device.download_url && device.download_url !== '#') {
+            btn1HTML = `<a href="${device.download_url}" target="_blank" rel="noopener noreferrer" class="btn">${device.btn1_text}</a>`;
+        }
+        
+        let btn2HTML = '';
+        if (device.btn2_text && device.btn2_text.trim() !== '' && device.btn2_url && device.btn2_url !== '#') {
+            btn2HTML = `<a href="${device.btn2_url}" target="_blank" rel="noopener noreferrer" class="btn" style="border-color: rgba(255,255,255,0.15); color: var(--text-color-dim);">${device.btn2_text}</a>`;
+        }
+        
+        const actionRowHTML = (btn1HTML || btn2HTML) ? `<div class="card-action-row">${btn1HTML}${btn2HTML}</div>` : '';
+
+        container.innerHTML += `
+            <div class="device-card">
+                <div class="device-banner-frame">
+                    <img class="device-banner-img" src="${device.banner_image_url}" alt="${device.name}">
+                    <div class="banner-overlay-text">${device.codename}</div>
+                </div>
+                <div class="card-body">
+                    <h3><span>${device.name}</span><span class="tag ${statusClass}">${device.status}</span></h3>
+                    <div class="device-meta">Maintainer: <span>${device.maintainer}</span></div>
+                    ${actionRowHTML}
+                </div>
+            </div>
+        `;
+    });
+}
+
+function loadToolsWorkspace() {
+    const container = document.getElementById('toolsContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    const targetArray = (typeof toolsDatabase !== 'undefined' && toolsDatabase.length > 0) ? toolsDatabase : [];
+    
+    targetArray.forEach(tool => {
+        let osClass = '';
+        let osBadgesHTML = ''; // Container to hold the readable OS names
+
+        // 1. Generate OS CSS classes and readable text badges
+        if (tool.os && tool.os.length > 0) {
+            const hasWindows = tool.os.includes('windows');
+            const hasMac = tool.os.includes('macos');
+            const hasLinux = tool.os.includes('linux');
+            
+            if (hasWindows && hasLinux) osClass = 'os-windows-linux';
+            else if (hasWindows) osClass = 'os-windows';
+            else if (hasMac) osClass = 'os-macos';
+
+            // Loop through each OS to build the visible text labels
+            tool.os.forEach(osName => {
+                // Formatting name strings cleanly
+                let displayName = osName;
+                if (osName === 'windows') displayName = 'Windows';
+                if (osName === 'macos') displayName = 'macOS';
+                if (osName === 'linux') displayName = 'Linux';
+
+                osBadgesHTML += `<span class="tag official" style="margin-right: 4px; font-family: monospace;">${displayName}</span>`;
+            });
+        }
+
+        const hasUrl = tool.url !== "#" && tool.url.trim() !== "";
+        const actionBtn = hasUrl 
+            ? `<a href="${tool.url}" target="_blank" rel="noopener noreferrer" class="btn" style="padding: 0.4rem 1.2rem; font-size: 0.75rem; text-decoration: none; text-align: center; border-radius: 4px; width: 100%;">Get Tool</a>`
+            : `<button class="btn" style="padding: 0.4rem 1.2rem; font-size: 0.75rem; border-radius: 4px; width: 100%;" disabled>Coming Soon</button>`;
+            
+        // 2. Added ${osBadgesHTML} right below the tool description
+        container.innerHTML += `
+            <div class="tools-item-card ${osClass}">
+                <div class="card-body" style="padding: 1.5rem;">
+                    <h3 style="font-size: 1.2rem; font-weight: normal; margin-bottom: 0.5rem;">${tool.name}</h3>
+                    <div class="tool-meta" style="color: var(--text-color-dim); margin-bottom: 1rem;">${tool.desc}</div>
+                    <div style="margin-bottom: 1.2rem; display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${osBadgesHTML}
+                    </div>
+                    ${actionBtn}
+                </div>
+            </div>
+        `;
+    });
+}
+
+function loadCreditsWorkspace() {
+    const container = document.getElementById('creditsContainer');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    const targetArray = (typeof creditsDatabase !== 'undefined' && creditsDatabase.length > 0) ? creditsDatabase : [];
+    
+    targetArray.forEach(item => {
+        // Check if there's a valid link provided
+        const hasProfile = item.profile_url && item.profile_url.trim() !== "" && item.profile_url !== "#";
+        
+        // If it has a link, wrap the name in an <a> tag with nice inline styles. Otherwise, keep it as plain text.
+        const nameHTML = hasProfile 
+            ? `<a href="${item.profile_url}" target="_blank" rel="noopener noreferrer" style="color: #ffffff; text-decoration: none; border-bottom: 1px dotted rgba(255,255,255,0.4); transition: color 0.2s ease;" onmouseover="this.style.color='#a0a0a0'" onmouseout="this.style.color='#ffffff'">${item.name}</a>`
+            : `<span>${item.name}</span>`;
+
+        container.innerHTML += `
+            <div class="credit-node-row">
+                <span class="credit-role">${item.role}</span>
+                <span class="credit-name">${nameHTML}</span>
+            </div>
+        `;
+    });
+}
+
+// Particle System Initialization
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let particlesArray;
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Particle {
+    constructor(x, y, directionX, directionY, size) {
+        this.x = x; this.y = y;
+        this.directionX = directionX; this.directionY = directionY;
+        this.size = size;
+        this.baseOpacity = Math.random() * 0.3 + 0.05;
+        this.opacity = this.baseOpacity;
+        this.blinkSpeed = Math.random() * 0.005 + 0.001;
+        this.angle = Math.random() * Math.PI * 2;
+    }
+    draw() {
+        ctx.beginPath();
+        ctx.rect(this.x, this.y, this.size * 2, this.size * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        ctx.fill();
+    }
+    update() {
+        if (this.x > canvas.width || this.x < 0) this.directionX = -this.directionX;
+        if (this.y > canvas.height || this.y < 0) this.directionY = -this.directionY;
+        this.x += this.directionX;
+        this.y += this.directionY;
+        this.angle += this.blinkSpeed;
+        this.opacity = this.baseOpacity + (Math.sin(this.angle) * 0.05);
+        this.draw();
+    }
+}
+
+function init() {
+    particlesArray = [];
+    let numberOfParticles = (canvas.height * canvas.width) / 18000;
+    if (numberOfParticles > 120) numberOfParticles = 120;
+    for (let i = 0; i < numberOfParticles; i++) {
+        let size = (Math.random() * 1) + 0.5;
+        let x = (Math.random() * ((innerWidth - size * 2) - (size * 2)) + size * 2);
+        let y = (Math.random() * ((innerHeight - size * 2) - (size * 2)) + size * 2);
+        let directionX = (Math.random() * 0.2) - 0.1;
+        let directionY = (Math.random() * 0.2) - 0.1;
+        particlesArray.push(new Particle(x, y, directionX, directionY, size));
+    }
+}
+
+function animate() {
+    requestAnimationFrame(animate);
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (let i = 0; i < particlesArray.length; i++) { particlesArray[i].update(); }
+}
+
+window.addEventListener('resize', () => {
+    canvas.width = innerWidth; canvas.height = innerHeight;
+    init();
+});
+
+init();
+animate();
+</script>
 </body>
 </html>
